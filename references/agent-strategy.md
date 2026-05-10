@@ -63,6 +63,8 @@ If >100 limit-ups are mostly back-row small caps with no capacity core, subtract
 
 Failed-board rate measures board quality and relay safety.
 
+Preferred source: 财联社`焦点复盘` when available. It often states `涨停数/炸板数/封板率`; compute failed-board rate as `1 - 封板率`, and use the article's 连板晋级率 and人气股反馈 to adjust within the score band.
+
 | 炸板率 | 得分 |
 | --- | --- |
 | <15% | 18-20 |
