@@ -1,6 +1,6 @@
 ---
 name: quant-test
-description: Quantitative Chinese A-share review and stock-selection workflow for "量化测试skill". Use when asked for 量化测试skill, 复盘选股, 量化评分, 情绪评分, 主线板块打分, 仓位上限, or date-specific A股复盘+选股.
+description: Quantitative Chinese A-share review and stock-selection workflow for "量化测试skill". Use when asked for 量化测试skill, 复盘选股, 量化评分, 情绪评分, 880005情绪钟摆, 日内窗口计划, 主线板块打分, 仓位上限, or date-specific A股复盘+选股.
 ---
 
 # 量化测试skill
@@ -13,14 +13,78 @@ Use this skill to turn an A-share daily review into a rule-based short-term stoc
 2. Use `a-share-short-review` if available for market data and prose style. Follow its data priority: MXSKILLS first, Eastmoney public APIs second, reputable public review sources third. Always label fallback data.
 3. For every trading-day review, search 财联社 with the exact date plus `焦点复盘`. Prefer the original `cls.cn` article; if blocked, use reputable mirrors that clearly转载财联社 such as 东方财富 or 新浪. Extract and source-tag: 涨停数、炸板数、封板率、连板晋级率、主线热点催化、人气股反馈、后市展望.
 4. Collect these fields for the target day and prior day: 涨停数量, 炸板率 or failed-board quality, 跌停数量, 最高连板/连板梯队, 主线板块指数或核心股表现, 成交额/量能, 涨跌家数, 创历史新高数量, 资金流向, and leading-sector stock pools.
-5. Apply hard veto rules before scoring: 跌停>60, 炸板率>45%, 高标断板后A杀扩散, or 主线板块指数跌破MA5/MA10并放量下跌 caps the money-making score at 40 and prohibits high-position relay.
-6. Score the market money-making effect by direct component points, not by vague impression: 涨停数量20, 炸板率20, 跌停数量20, 连板高度/梯队15, 主线板块指数15, 成交额/量能10. Use 财联社焦点复盘封板率 to derive 炸板率 whenever available: `炸板率 = 1 - 封板率`; if both涨停分析 and焦点复盘 exist, prefer焦点复盘 for the written review and mention口径差异 if material. Use `scripts/score_quant.py` when component points are available as JSON; otherwise compute manually from `references/agent-strategy.md`.
-7. Classify the emotional position as 冰点/修复/主升/高潮/退潮. Use the score as a base, then adjust by structure: index false strength, back-row climax, or divergence-day return can change the action even when the total score looks acceptable.
-8. Score candidate main lines with the 100-point model: 板块指数趋势25, 板块成交额20, 板块宽度15, 核心结构15, 分歧后回流15, 叙事/催化强度10. Main-line judgment must compare with the previous trading day; one-day strength is only rebound unless divergence-day return and sector diffusion confirm it. Use 财联社焦点复盘主线热点 paragraphs as the first source for catalysts and sector narrative.
-9. Determine main-line stage: 初期/分歧/高潮/退潮. The output must state the stage and use only the matching trading method.
-10. Apply position rules after market and main-line scoring: base cap, recent trading result, consecutive losses, month-end/holiday timing, regulatory pressure, negative news, and profit retracement.
-11. Build the selection pool only from the strongest one or two directions. Prefer 龙头/中军/趋势核心/创新高核心; avoid 后排杂毛 and climax extensions unless the output labels them as observation-only.
-12. Write a Markdown file under the current workspace unless the user gives another folder. Suggested filename: `YYYYMMDD量化复盘选股.md`.
+5. Before market-environment scoring, run the `880005情绪钟摆` and `日内四窗口` checks below. They act as short-term position switches: cycle decides base position, extremes decide the trading mode.
+6. Apply hard veto rules before scoring: 跌停>60, 炸板率>45%, 高标断板后A杀扩散, 880005/RedCount进入高潮区仍追高, or 主线板块指数跌破MA5/MA10并放量下跌 caps the money-making score at 40 and prohibits high-position relay.
+7. Score the market money-making effect by direct component points, not by vague impression: 涨停数量20, 炸板率20, 跌停数量20, 连板高度/梯队15, 主线板块指数15, 成交额/量能10. Use 财联社焦点复盘封板率 to derive 炸板率 whenever available: `炸板率 = 1 - 封板率`; if both涨停分析 and焦点复盘 exist, prefer焦点复盘 for the written review and mention口径差异 if material. Use `scripts/score_quant.py` when component points are available as JSON; otherwise compute manually from `references/agent-strategy.md`.
+8. Classify the emotional position as 冰点/修复/主升/高潮/退潮. Use the score as a base, then adjust by structure: index false strength, back-row climax, 880005情绪钟摆, or divergence-day return can change the action even when the total score looks acceptable.
+9. Score candidate main lines with the 100-point model: 板块指数趋势25, 板块成交额20, 板块宽度15, 核心结构15, 分歧后回流15, 叙事/催化强度10. Main-line judgment must compare with the previous trading day; one-day strength is only rebound unless divergence-day return and sector diffusion confirm it. Use 财联社焦点复盘主线热点 paragraphs as the first source for catalysts and sector narrative.
+10. Determine main-line stage: 初期/分歧/高潮/退潮. The output must state the stage and route only to the matching trading methods below.
+11. Apply position rules after market and main-line scoring: base cap, recent trading result, consecutive losses, month-end/holiday timing, regulatory pressure, negative news, and profit retracement.
+12. Build the selection pool only from the strongest one or two directions. Prefer 龙头/中军/趋势核心/创新高核心; avoid 后排杂毛 and climax extensions unless the output labels them as observation-only.
+13. Write a Markdown file under the current workspace unless the user gives another folder. Suggested filename: `YYYYMMDD量化复盘选股.md`.
+
+## Emotion Clock, Windows, and Mode Routing
+
+This module must run before `市场环境评分`. It is a position switch and mode router, not a replacement for main-line scoring.
+
+### 880005情绪钟摆
+
+- Use 通达信 `880005` daily data as the required source for this module. Calculate `880005` MA5 to define the short-term cycle. `MA5 < 2000` = 冰点/进攻观察; `MA5 > 2300-2500` = 高潮/降仓区.
+- If 通达信 `880005` data is unavailable, write `通达信880005未稳定返回` and do not substitute another index silently. You may use RedCount alone as a lower-confidence trigger, but label the cycle judgment as incomplete.
+- Use real-time or same-day `RedCount` as the trigger. 红盘家数 `<=1000` = 冰点; extreme panic can relax to `<=1500`; `>=4000` = 高潮.
+- Cycle determines base position; extreme RedCount determines mode. Low cycle + low RedCount routes to 冰点修复; high cycle + high RedCount routes to 降仓/不追高.
+
+### 日内四窗口
+
+- `9:15-9:30`: only emotion positioning and pre-market hypothesis. Do not force trades.
+- `9:30-10:30`: primary execution window. Confirm 共振日、反弹日、最快反包首板、最高板弱转强.
+- `10:30-14:30`: certainty drops. Handle rotation and risk control only; if afternoon index expectation weakens, prohibit divergence dip-buying and weak-to-strong chasing.
+- `14:30-15:00`: confirm tail-session ice point and lock next-day plan.
+- Every quantitative daily review must include `明日窗口计划`; do not output only a stock pool.
+
+### 极值-反弹-强化三日循环
+
+- `Day1`: tail-session RedCount `<=1000` confirms ice point.
+- `Day2`: rebound day. Prefer earliest reversal first-board, highest-board weak-to-strong, and high-recognition long-leg dip-buying, only if the previous high-position loss effect stops spreading.
+- `Day3`: strengthening day. If emotion remains low, consider fastest 1-to-2 or independent-logic second board. If already hot, skip new second-board positions.
+- Optional `Day4`补票: only when index opens low + emotion re-enters a low point; watch flat/green auction 2-to-3 weak-to-strong.
+- Use this cycle in `次日候选模式路由`.
+
+### 容错率辅助指标
+
+- 同花顺全A `CCI(5)`: from around `-100` turning up = capacity-stock swing start support; above `+100` or upper-band turn-down = reduce/switch signal.
+- `昨日炸板股指数` vs its MA5: far above MA5 and rising = repair force strong and tolerance improves; close to or below MA5 = tolerance drops and position must be reduced.
+- These indicators only validate market tolerance. They do not override main-line scoring.
+
+### 容量过滤和竞价门槛
+
+- Most modes require daily turnover `>=10亿`; around `20亿` is ideal capacity.
+- In weak or shrinking-volume markets, require both `成交额>=10亿` and `流通市值>=100亿`.
+- Auction watchlist gate: auction amount `>2000万` and volume ratio `>1.5`.
+- Traditional 1-to-2 may require auction volume `>=15%` of previous-day total volume plus a high open, but treat this as a historical reference, not a mechanical rule.
+- `成交额/流通市值/竞价量比` are preconditions before any mode trigger.
+
+### 涨停板质量评分
+
+- First priority is sector linkage. After an individual limit-up, the sector index should rise together and 2-3 recognizable followers should appear within 10-30 minutes.
+- For capacity stocks, early-board sealed order around `3-4亿` adds quality. In weak or stock-only liquidity, sealed order above `15亿` can signal excessive consensus and should not be blindly chased.
+- If a failed board refills within 5 minutes with active sweep orders, second volume expansion, and thicker sealed orders, add quality.
+- Repeated failed boards, weak refills, or no sector followers downgrade quality.
+
+### 拿货分时
+
+- Only identify this pattern when the index is one-way down, emotion is extremely poor, and the stock has continuous one-word board opening or high-recognition leader attributes.
+- Required traits:逆势震荡走高, repeated board touches without sealing or repeated failed boards, full-day volume, intraday amplitude usually `>10%`, and a high-volume bullish daily candle.
+- Next-day shrink-volume acceleration confirms; a low open in auction can become an add point only after confirmation.
+- This is dangerous. Limit it to a `2%-5%` trial layer. Never use it to justify ordinary weak stocks.
+
+### 四类模式路由
+
+- `首板`: only for emotion turn-up, early main-rally resonance, or low-position independent strength.
+- `二波反包`: only for absolute prior popularity leaders or core capacity names on the day after an ice point.
+- `一进二`: only on TurnUp strengthening day or early MainRally theme fermentation; prefer the fastest turnover second board.
+- `分歧低吸`: only for the total leader or core capacity stock in a main rally's first strong divergence. Prohibited during retreat and during afternoon index expected weakness.
+- `撬跌停`: extreme ice-point play only. Pry-board volume must reach `15%-25%` of a recent historical huge-volume day's turnover, otherwise it is not valid support.
 
 ## Required Output
 
@@ -31,8 +95,9 @@ For a trading day, write these sections in order:
 3. `◆ 三、赚钱效应量化评分`
 4. `◆ 四、主线板块量化排名`
 5. `◆ 五、选股观察池`
-6. `◆ 六、仓位与风控`
-7. `◆ 七、次日验证点`
+6. `◆ 六、明日窗口计划`
+7. `◆ 七、仓位与风控`
+8. `◆ 八、次日验证点`
 
 Required tables:
 
