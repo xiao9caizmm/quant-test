@@ -66,3 +66,25 @@ Required tables:
 
 - Full strategy tables and default scoring rubrics: `references/agent-strategy.md`.
 - Optional score calculator: `scripts/score_quant.py`.
+
+## Main-Line Ranking Detail Override
+
+When writing `◆ 四、主线板块量化排名`, the output must expose the numeric score for each 100-point main-line component instead of only prose labels.
+
+Use this required table structure:
+
+| 排名 | 板块 | 指数趋势/25 | 成交额/20 | 宽度/15 | 核心结构/15 | 分歧回流/15 | 叙事催化/10 | 总分 | 较前日变化 | 定性 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+
+Rules:
+
+- The ranking table must include exactly 6 sector/theme rows, ordered by total score. If fewer than 6 strong sectors exist, fill the lower rows with `弱轮动线`, `防守线`, or `退潮观察线` rather than omitting them.
+- Each component cell must include the score and a short evidence phrase, for example `21：科创50领涨，板块强于指数`.
+- `总分` must equal the six component scores.
+- `较前日变化` must compare with the prior trading day's main-line ranking and score when available, using formats such as `第2->第1，+10分`, `第1->第1，-5分`, `新进，+68分`, or `第1->第3，-18分`.
+- After the ranking table, add a `主线较前日变化分析` subsection. It must explain:
+  - which sectors rose in ranking and why;
+  - which sectors fell in ranking and why;
+  - whether the top-ranked sector is confirmed main line, divergence repair, strong rotation, or retreat observation;
+  - whether the change is driven by core-stock new highs, sector breadth, volume, divergence-day return, catalyst strength, or only one-day emotion.
+- Do not call a sector a main line only because it ranks first that day. If it is new, low-capacity, or one-day event-driven, label it as `强轮动线` or `抱团线` until it proves next-day return and board diffusion.
