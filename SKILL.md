@@ -62,6 +62,25 @@ Required tables:
 - If sources disagree materially, use ranges such as `约`, explain the口径, and reduce confidence in the score.
 - If no account trading history is provided, state that profit/loss dynamic adjustments are not applied; do not invent recent wins/losses.
 
+## New-High StockPick Data Rule
+
+For all quantitative reviews and stock-selection outputs, historical-new-high stocks are a required input to main-line scoring and the observation pool. The primary source is 妙想 `MX_StockPick` through the local `mx-xuangu` skill.
+
+Recommended query:
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'; $env:PYTHONUTF8='1'; python 'C:\Users\33256\.codex\skills\mx-xuangu\mx_xuangu.py' "YYYY年M月D日创历史新高的A股，显示股票简称、东财行业、概念、总市值"
+```
+
+Usage rules:
+
+- Read the CSV/JSON output path printed by `mx_xuangu.py`; do not reuse stale data from another date. On Windows, keep `PYTHONIOENCODING=utf-8` and `PYTHONUTF8=1` if GBK encoding errors appear.
+- Verify the returned date fields match the target trading day. Treat the CSV row count as the historical-new-high count only after this check.
+- Extract `名称`/`股票简称`, `东财行业分类二级`, `概念`, `总市值`, price/change fields, and the historical-high date when present.
+- Group by industry/theme to quantify new-high concentration. This grouping must feed the `主线板块量化排名`: add evidence to `宽度`, `核心结构`, and `分歧回流` when core names keep making new highs after prior-day divergence.
+- In the stock pool, prefer names from the new-high pool when they also belong to a ranked direction. Label their role as `新高核心`, `趋势核心`, `中军`, or `弹性核心`; do not select them only because they made a new high.
+- If `MX_StockPick` returns empty, malformed, wrong-date, or unrelated rows, explicitly mark the field as `MX_StockPick未稳定返回`, then fall back to Tonghuashun Data Center historical-new-high data if available, and finally to public review/news sources as lower-confidence supplements.
+
 ## References
 
 - Full strategy tables and default scoring rubrics: `references/agent-strategy.md`.
