@@ -1,0 +1,4 @@
+interface:
+  display_name: "量化测试skill"
+  short_description: "基于量化情绪评分、主线强度和仓位风控的A股复盘选股工作流"
+  default_prompt: "使用量化测试skill，对指定日期的A股行情进行复盘评分、主线判断和短线选股观察池输出。"
