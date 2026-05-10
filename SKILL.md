@@ -147,3 +147,25 @@ Negative rules:
 Required validation note:
 
 - After the stock-selection table, add one sentence: `方向一致性检查：本表仅保留行业/概念/连板梯队/公开复盘文本能够映射到对应主线方向的个股；未匹配方向不强行补位。`
+
+## Mandatory Stock Classification Source Check
+
+Before classifying any stock into a main-line direction or stock-selection pool, verify the classification with the same source chain every time:
+
+1. **MX_StockPick / `mx-xuangu` first.** Check `东财行业分类二级`, `申万行业分类`, `概念`, target-day涨跌幅, and market cap. Treat `东财行业分类二级` and `申万行业分类` as the first gate, not just the concept tags.
+2. **`mx-search` second.** Search the target date plus the stock name and likely directions, such as `YYYY年M月D日 股票名 上涨 原因 机器人 商业航天 光通信`. Use it to identify the actual same-day catalyst, abnormal-move announcement, Dragon-Tiger list, or public review explanation.
+3. **财联社焦点复盘/连板分析 third.** If the stock is being used for a hot theme such as 机器人、商业航天、CPO、AI应用、PCB, verify whether 财联社 or another reputable same-day review explicitly names the stock under that theme.
+
+Classification priority:
+
+- If all three sources agree, classify the stock into that direction.
+- If industry and same-day catalyst point to one direction but loose concept tags point to another, follow the industry plus same-day catalyst. Do not follow loose concept tags.
+- If only a concept tag links the stock to a direction and there is no industry match or same-day review confirmation, exclude it from that direction.
+- If the stock is a mixed-attribute name, classify it by the strongest same-day reason and write the nuance in `入选逻辑`; otherwise leave it out.
+
+Examples from local validation:
+
+- `三瑞智能` on 2026-05-08 should not be treated as a商业航天 core just because it has low-altitude/eVTOL-style tags. `mx-search` showed the stronger same-day logic was 人形机器人/机器人动力模组/次新/异动公告.
+- `中瓷电子` on 2026-05-08 should not be treated as a商业航天 core. The stronger evidence was 通信设备、光通信陶瓷封装、6G、第三代半导体.
+- `杰普特` on 2026-05-08 should not be used as a机器人主线 stock. It is better classified as 激光设备、光通信设备链、PCB/先进封装设备, and the target-day涨幅 was not strong.
+- `大族激光` on 2026-05-08 has robot/减速器 tags, but the stronger move reason was 激光设备、PCB设备、先进封装设备、AI光通信设备链. Do not use it as a pure机器人 representative unless same-day review explicitly frames it that way.
