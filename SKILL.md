@@ -86,6 +86,38 @@ This module must run before `市场环境评分`. It is a position switch and mo
 - `分歧低吸`: only for the total leader or core capacity stock in a main rally's first strong divergence. Prohibited during retreat and during afternoon index expected weakness.
 - `撬跌停`: extreme ice-point play only. Pry-board volume must reach `15%-25%` of a recent historical huge-volume day's turnover, otherwise it is not valid support.
 
+### 最终执行路由
+
+Use this order every time:
+
+1. Judge market environment and 通达信 `880005` cycle.
+2. Classify the day as 冰点日、反弹日、强化日、高潮日, or 退潮日.
+3. Select only the modes allowed by that day type.
+4. Filter candidates by成交额、流通市值、板块联动、涨停板质量.
+5. Output position caps after all filters, not before.
+
+`杰哥模式` is only a超短节点识别器. It may help identify ice-point/rebound/strengthening nodes, but it must never raise the position cap or relax discipline.
+
+Default position discipline:
+
+- 普通票单票上限 `20%`.
+- 试错层 `2%-10%`.
+- After consecutive losses, reduce trial layer to `2%-5%`.
+- When trading is out of control or rules are repeatedly violated, reduce active position to `0%`.
+
+### 纪律补丁
+
+The following are hard violations and must be labeled as违规 in the review/plan:
+
+- 下午指数走弱时低吸.
+- 退潮期弱转强.
+- 非主线最快二板.
+- 没有板块联动的孤立涨停.
+- 用拿货分时解释亏损票.
+- 错过第一个最快二板后追第二、第三个低质量卡位.
+
+Do not use `杰哥模式`, concept tags, or post-hoc narratives to justify these violations.
+
 ## Required Output
 
 For a trading day, write these sections in order:
