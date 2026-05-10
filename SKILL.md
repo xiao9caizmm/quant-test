@@ -116,9 +116,34 @@ When writing `◆ 五、选股观察池`, the pool must cover every direction li
 
 Rules:
 
-- Select 2-3 stocks for each ranked sector/theme direction.
+- The ranking table may contain six sector/theme rows, but the stock pool must not force-fill names for weak or unmatched directions.
+- Select 2-3 stocks for each ranked sector/theme direction only when enough valid matched candidates exist. If fewer than 2 valid stocks exist, output the valid names only; if none exist, write one row with `暂无可验证候选` and explain the missing evidence.
 - Add a `对应排名` or `主线方向` column so every stock maps back to one of the six ranked directions.
 - For confirmed or effective main lines, prefer `核心`, `中军`, `趋势核心`, `弹性核心`, and `新高核心`.
-- For `强轮动线`, `弱轮动线`, `防守线`, or `退潮观察线`, still list 2-3 names, but label the role as `观察` or `轻仓观察`, and set a lower position cap.
+- For `强轮动线`, `弱轮动线`, `防守线`, or `退潮观察线`, list stocks only after passing the direction-consistency gate below; label the role as `观察` or `轻仓观察`, and set a lower position cap.
 - Do not add stocks from unranked themes. If a stock cannot be mapped to a ranked direction, exclude it.
 - Do not select a stock only because it hit limit-up. It must have a clear role, a next-day trigger condition, an invalidation condition, a position cap, and a risk note.
+
+## Stock Pool Direction Consistency Gate
+
+Before a stock enters `◆ 五、选股观察池`, it must pass a direction-consistency check against its ranked sector/theme. This gate overrides any instruction to output 2-3 stocks per direction.
+
+Evidence that can validate a stock-direction match:
+
+- The stock's `东财行业分类二级`, `申万行业分类`, or `概念` directly contains the ranked direction keyword or a clear synonym, such as `通信设备/光模块/光通信/CPO/数据中心`, `化学制药/生物制品/医疗服务/创新药`, `半导体/光学光电子/PCB/服务器/算力硬件`, `自动化设备/机器人/专用设备`, `电网设备/火电/绿电/煤炭`, etc.
+- The stock is named in the target-day limit-up ladder, focus-review article, or catalyst paragraph as a core stock of that ranked direction.
+- The stock is a widely recognized upstream/downstream core of the direction and the review explicitly states the mapping, for example `光通信器件 -> 算力硬件` or `电网设备 -> 电力设备`. Do not rely on loose imagination.
+- Use industry-first matching and concept-assisted confirmation. A loose concept tag alone is not enough when the industry clearly points elsewhere. For example, `医药电商` does not make an `电机` stock an `创新药` stock; `新能源车/锂电池概念` does not make a `通信设备` stock a `锂电` stock; `油运/航运` does not make a `航运港口` stock an `油气` stock; a generic `军工` tag does not make an unrelated stock a `商业航天` core unless `商业航天/卫星导航/航天装备` evidence is present.
+
+Negative rules:
+
+- Never allocate new-high stocks by market-cap order, CSV row order, or fixed slicing across ranked directions.
+- Never put an unrelated industry into a direction just to satisfy the 2-3 stock count. Examples: `航运港口` cannot be placed under `光通信/数据中心`; `半导体/通信设备` cannot be placed under `创新药/医药`; `生物制品/医疗服务` cannot be placed under `算力硬件`; `非白酒` cannot be placed under `机器人`.
+- For mixed or broad directions such as `普反低位`, `防御`, `低位轮动`, `商业航天`, `贵金属`, `油气`, and `旅游体育`, be stricter rather than looser. If the data only gives a weak or generic concept tag and no industry match, output `暂无可验证候选`.
+- A stock can appear in only one direction unless there is explicit source evidence for dual attributes. If overlap exists, assign it to the direction with the strongest source evidence and explain briefly.
+- ST stocks are excluded from active observation pools by default. If a historical-new-high result contains an ST stock, only mention it in a data note unless the user explicitly asks to include ST names.
+- If a direction has ranking evidence but no valid candidate stock, keep the direction in the ranking table and write `暂无可验证候选` in the stock pool. This is better than inventing a candidate.
+
+Required validation note:
+
+- After the stock-selection table, add one sentence: `方向一致性检查：本表仅保留行业/概念/连板梯队/公开复盘文本能够映射到对应主线方向的个股；未匹配方向不强行补位。`
