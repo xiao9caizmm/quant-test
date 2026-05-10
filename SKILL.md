@@ -88,3 +88,16 @@ Rules:
   - whether the top-ranked sector is confirmed main line, divergence repair, strong rotation, or retreat observation;
   - whether the change is driven by core-stock new highs, sector breadth, volume, divergence-day return, catalyst strength, or only one-day emotion.
 - Do not call a sector a main line only because it ranks first that day. If it is new, low-capacity, or one-day event-driven, label it as `强轮动线` or `抱团线` until it proves next-day return and board diffusion.
+
+## Stock Pool Direction Coverage Override
+
+When writing `◆ 五、选股观察池`, the pool must cover every direction listed in `◆ 四、主线板块量化排名`.
+
+Rules:
+
+- Select 2-3 stocks for each ranked sector/theme direction.
+- Add a `对应排名` or `主线方向` column so every stock maps back to one of the six ranked directions.
+- For confirmed or effective main lines, prefer `核心`, `中军`, `趋势核心`, `弹性核心`, and `新高核心`.
+- For `强轮动线`, `弱轮动线`, `防守线`, or `退潮观察线`, still list 2-3 names, but label the role as `观察` or `轻仓观察`, and set a lower position cap.
+- Do not add stocks from unranked themes. If a stock cannot be mapped to a ranked direction, exclude it.
+- Do not select a stock only because it hit limit-up. It must have a clear role, a next-day trigger condition, an invalidation condition, a position cap, and a risk note.
