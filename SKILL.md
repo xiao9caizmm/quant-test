@@ -75,6 +75,8 @@ $env:PYTHONIOENCODING='utf-8'; $env:PYTHONUTF8='1'; python 'C:\Users\33256\.code
 Usage rules:
 
 - Read the CSV/JSON output path printed by `mx_xuangu.py`; do not reuse stale data from another date. On Windows, keep `PYTHONIOENCODING=utf-8` and `PYTHONUTF8=1` if GBK encoding errors appear.
+- Rate-limit `MX_StockPick` conservatively. Empirical rule from local runs: back-to-back dated historical-new-high queries can trigger status `112` / `请求频率过高`; one query every 35 seconds completed a 7-date batch without triggering frequency control. For future batch reviews, wait at least 35 seconds between `mx-xuangu` calls; after any status `112`, stop the batch, wait 60-120 seconds, then resume from the failed date. Never retry status `112` in a tight loop.
+- Cache and reuse the CSV/JSON path for each target date. If the target-date CSV already exists and its row count/date fields match the task, read it instead of calling `MX_StockPick` again.
 - Verify the returned date fields match the target trading day. Treat the CSV row count as the historical-new-high count only after this check.
 - Extract `名称`/`股票简称`, `东财行业分类二级`, `概念`, `总市值`, price/change fields, and the historical-high date when present.
 - Group by industry/theme to quantify new-high concentration. This grouping must feed the `主线板块量化排名`: add evidence to `宽度`, `核心结构`, and `分歧回流` when core names keep making new highs after prior-day divergence.
