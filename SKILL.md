@@ -11,17 +11,25 @@ Use this skill to turn an A-share daily review into a rule-based short-term stoc
 
 1. Confirm the target trading day and previous trading day. If the target is a weekend or exchange holiday, write a non-trading-day strategy note instead of inventing data.
 2. Use `a-share-short-review` if available for market data and prose style. Follow its data priority: MXSKILLS first, Eastmoney public APIs second, reputable public review sources third. Always label fallback data.
-3. For every trading-day review, search 财联社 with the exact date plus `焦点复盘`. Prefer the original `cls.cn` article; if blocked, use reputable mirrors that clearly转载财联社 such as 东方财富 or 新浪. Extract and source-tag: 涨停数、炸板数、封板率、连板晋级率、主线热点催化、人气股反馈、后市展望.
-4. Collect these fields for the target day and prior day: 涨停数量, 炸板率 or failed-board quality, 跌停数量, 最高连板/连板梯队, 主线板块指数或核心股表现, 成交额/量能, 涨跌家数, 创历史新高数量, 资金流向, and leading-sector stock pools.
+3. For every trading-day review, search 财联社 with the exact date plus `焦点复盘`. Prefer the original `cls.cn` article; if blocked, use reputable mirrors that clearly转载财联社 such as 东方财富 or 新浪. Extract and source-tag: 涨停数、炸板数、封板率、连板晋级率、主线热点催化、人气股反馈、后市展望. 涨停、跌停、炸板、连板晋级率默认使用非 ST 口径；若原文只给含 ST 口径，必须标注并降置信度。
+4. Collect these fields for the target day and prior day: 涨停数量, 炸板率 or failed-board quality, 跌停数量, 最高连板/连板梯队, 回头波>8%股票数量, 主线板块指数或核心股表现, 成交额/量能, 涨跌家数, 创历史新高数量, 资金流向, and leading-sector stock pools. Pull limit-up/limit-down/failed-board/consecutive-board details with ST stocks excluded unless the user explicitly asks to include ST.
 5. Before market-environment scoring, run the `880005情绪钟摆` and `日内四窗口` checks below. They act as short-term position switches: cycle decides base position, extremes decide the trading mode.
 6. Apply hard veto rules before scoring: 跌停>60, 炸板率>45%, 高标断板后A杀扩散, 880005/RedCount进入高潮区仍追高, or 主线板块指数跌破MA5/MA10并放量下跌 caps the money-making score at 40 and prohibits high-position relay.
-7. Score the market money-making effect by direct component points, not by vague impression: 涨停数量20, 炸板率20, 跌停数量20, 连板高度/梯队15, 主线板块指数15, 成交额/量能10. Use 财联社焦点复盘封板率 to derive 炸板率 whenever available: `炸板率 = 1 - 封板率`; if both涨停分析 and焦点复盘 exist, prefer焦点复盘 for the written review and mention口径差异 if material. Use `scripts/score_quant.py` when component points are available as JSON; otherwise compute manually from `references/agent-strategy.md`.
+7. Score the market money-making effect by direct component points, not by vague impression: 涨停数量20, 炸板率20, 跌停数量20, 连板高度/梯队15, 主线板块指数15, 成交额/量能10. Use 财联社焦点复盘封板率 to derive 炸板率 whenever available: `炸板率 = 1 - 封板率`; if both涨停分析 and焦点复盘 exist, prefer焦点复盘 for the written review and mention口径差异 if material. Use non-ST counts for scoring; do not mix all-market counts that include ST with non-ST ladder data. 回头波>8% count is a risk modifier: if it expands materially or concentrates in a top-ranked theme, reduce continuation confidence and mention it in the score judgment. Use `scripts/score_quant.py` when component points are available as JSON; otherwise compute manually from `references/agent-strategy.md`.
 8. Classify the emotional position as 冰点/修复/主升/高潮/退潮. Use the score as a base, then adjust by structure: index false strength, back-row climax, 880005情绪钟摆, or divergence-day return can change the action even when the total score looks acceptable.
 9. Score candidate main lines with the 100-point model: 板块指数趋势25, 板块成交额20, 板块宽度15, 核心结构15, 分歧后回流15, 叙事/催化强度10. Main-line judgment must compare with the previous trading day; one-day strength is only rebound unless divergence-day return and sector diffusion confirm it. Use 财联社焦点复盘主线热点 paragraphs as the first source for catalysts and sector narrative.
 10. Determine main-line stage: 初期/分歧/高潮/退潮. The output must state the stage and route only to the matching trading methods below.
 11. Apply position rules after market and main-line scoring: base cap, recent trading result, consecutive losses, month-end/holiday timing, regulatory pressure, negative news, and profit retracement.
 12. Build the selection pool only from the strongest one or two directions. Prefer 龙头/中军/趋势核心/创新高核心; avoid 后排杂毛 and climax extensions unless the output labels them as observation-only.
-13. Write a Markdown file under the current workspace unless the user gives another folder. Suggested filename: `YYYYMMDD量化复盘选股.md`.
+13. Write a Markdown file under `A股复盘/量化复盘选股` in the current workspace unless the user gives another folder. Suggested filename: `YYYYMMDD量化复盘选股.md`.
+
+## Limit-Up/Limit-Down ST Exclusion
+
+- For all quantitative scoring and route decisions, 涨停数、跌停数、炸板数、封板率、连板梯队、连板晋级率默认使用非 ST 口径。
+- When using `mx-xuangu` / `MX_StockPick`, include `剔除ST、*ST、S*ST、退市股` in every natural-language query for 涨停、跌停、炸板、连板 or 连续涨停天数.
+- When using 财联社、东方财富、同花顺、公开复盘文本 or Eastmoney public APIs, remove stocks whose names contain `ST`、`*ST`、`S*ST`、`退市` before counting or building ladders.
+- If a source only reports aggregate all-market counts and cannot separate ST, label the value as `含ST口径`, do not mix it with non-ST detail tables, and reduce confidence in the money-making score.
+- ST names may appear only in a data note unless the user explicitly asks to include ST stocks; they must not enter active observation pools by default.
 
 ## Emotion Clock, Windows, and Mode Routing
 
@@ -70,6 +78,21 @@ This module must run before `市场环境评分`. It is a position switch and mo
 - For capacity stocks, early-board sealed order around `3-4亿` adds quality. In weak or stock-only liquidity, sealed order above `15亿` can signal excessive consensus and should not be blindly chased.
 - If a failed board refills within 5 minutes with active sweep orders, second volume expansion, and thicker sealed orders, add quality.
 - Repeated failed boards, weak refills, or no sector followers downgrade quality.
+
+### 回头波风险统计
+
+`回头波` is the intraday pullback from a stock's daily high to its close:
+
+`回头波 = (日内最高价 - 收盘价) / 日内最高价 * 100%`
+
+Every quantitative review must count non-ST stocks where `回头波 > 8%` on the target day. Exclude `ST`, `*ST`, `S*ST`, and `退市` names by default.
+
+Use this as a chasing-loss and hot-theme fade indicator:
+
+- If the count expands versus the previous trading day, reduce market tolerance and note that intraday追高亏钱效应 is rising.
+- If `回头波 > 8%` names concentrate in a ranked main-line direction, downgrade that direction's `分歧回流` or `核心结构` evidence unless its core stocks still close strongly.
+- If the count is low while涨停/新高扩散, it supports higher continuation quality.
+- Do not treat 回头波 as炸板率. 炸板率 only measures failed limit-up boards; 回头波 measures all-stock high-to-close fade.
 
 ### 拿货分时
 
@@ -137,6 +160,7 @@ Required tables:
 - Main-line ranking table columns: `排名`, `板块`, `指数趋势`, `成交额`, `宽度`, `核心结构`, `分歧回流`, `叙事催化`, `总分`, `定性`.
 - Stock-selection table columns: `股票`, `方向`, `角色`, `入选逻辑`, `触发条件`, `失效条件`, `仓位上限`, `风险`.
 - Include a concise `财联社焦点复盘口径` note when the article is available: 封板率/炸板数, 连板晋级率, main catalysts, and outlook risk.
+- Include a `回头波风险统计` note or table: count of non-ST stocks with `回头波 > 8%`, concentrated themes, representative names, and impact on continuation confidence.
 
 ## Selection Rules
 
@@ -156,6 +180,7 @@ Required tables:
 - If 财联社焦点复盘 provides 封板率, do not estimate 炸板率. Convert it directly and label it `财联社焦点复盘口径`.
 - If main-line board indices are unavailable, use core-stock performance plus sector breadth; mark it as `核心股口径`.
 - If new-high data is unavailable, do not invent it. Use `公开源未稳定返回` and rely on limit-up/board/core-stock evidence.
+- If 回头波 OHLC data is unavailable, do not invent it. Write `回头波结构化数据未稳定返回`, then use public review descriptions only as qualitative fade-risk evidence.
 - If sources disagree materially, use ranges such as `约`, explain the口径, and reduce confidence in the score.
 - If no account trading history is provided, state that profit/loss dynamic adjustments are not applied; do not invent recent wins/losses.
 
